@@ -11,20 +11,36 @@ struct Row {
     low: f32,
 }
 
-fn example() -> Result<(), Box<dyn Error>> {
+fn calculate_log_returns(rows: Vec<Row>) -> Vec<f32> {
+    let mut result: Vec<f32> = vec![];
+
+    for n in 1..rows.len() {
+        let log_return = f32::ln(rows[n].close / rows[n - 1].close);
+        result.push(log_return);
+    }
+
+    result
+}
+
+fn start() -> Result<(), Box<dyn Error>> {
     let file = File::open("data.csv")?;
     let mut rdr = csv::Reader::from_reader(file);
 
+    let mut rows: Vec<Row> = vec![];
+
     for result in rdr.deserialize() {
-        let record: Row = result?;
-        println!("{:?}", record);
+        rows.push(result?);
     }
+
+    let log_returns = calculate_log_returns(rows);
+
+    println!("{:?}", log_returns);
 
     Ok(())
 }
 
 fn main() {
-    if let Err(err) = example() {
+    if let Err(err) = start() {
         println!("error running example: {}", err);
         process::exit(1);
     }
