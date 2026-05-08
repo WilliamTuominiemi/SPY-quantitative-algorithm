@@ -11,12 +11,15 @@ struct Row {
     low: f32,
 }
 
-fn calculate_log_returns(rows: Vec<Row>) -> Vec<f32> {
+fn calculate_log_return(a: f32, b: f32) -> f32 {
+    f32::ln(a / b)
+}
+
+fn log_returns(rows: Vec<Row>) -> Vec<f32> {
     let mut result: Vec<f32> = vec![];
 
     for n in 1..rows.len() {
-        let log_return = f32::ln(rows[n].close / rows[n - 1].close);
-        result.push(log_return);
+        result.push(calculate_log_return(rows[n].close, rows[n - 1].close));
     }
 
     result
@@ -32,7 +35,7 @@ fn start() -> Result<(), Box<dyn Error>> {
         rows.push(result?);
     }
 
-    let log_returns = calculate_log_returns(rows);
+    let log_returns = log_returns(rows);
 
     println!("{:?}", log_returns);
 
@@ -43,5 +46,20 @@ fn main() {
     if let Err(err) = start() {
         println!("error running example: {}", err);
         process::exit(1);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::calculate_log_return;
+
+    #[test]
+    fn test_calculate_log_return() {
+        let a = 417.94;
+        let b = 422.12;
+        let c = 419.07;
+
+        assert_eq!(calculate_log_return(b, a), 0.009951738);
+        assert_eq!(calculate_log_return(c, b), -0.007251624);
     }
 }
