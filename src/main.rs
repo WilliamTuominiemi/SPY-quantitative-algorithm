@@ -1,3 +1,4 @@
+use core::num;
 use serde::Deserialize;
 use std::{error::Error, fs::File, process};
 
@@ -25,10 +26,20 @@ fn log_returns(rows: Vec<Row>) -> Vec<f32> {
     result
 }
 
-fn mean(v: Vec<f32>) -> f32 {
+fn mean(v: &Vec<f32>) -> f32 {
     let sum: f32 = v.iter().sum();
     let count = v.len() as f32;
     sum / count
+}
+
+fn variance(v: &Vec<f32>, mean: &f32) -> f32 {
+    let mut numerator = 0.0;
+
+    for n in v {
+        numerator += (n - mean).powf(2.0);
+    }
+
+    numerator / v.len() as f32
 }
 
 fn start() -> Result<(), Box<dyn Error>> {
@@ -43,9 +54,12 @@ fn start() -> Result<(), Box<dyn Error>> {
 
     let log_returns = log_returns(rows);
 
-    let mean = mean(log_returns);
+    let mean = mean(&log_returns);
+
+    let variance = variance(&log_returns, &mean);
 
     println!("{:?}", mean);
+    println!("{:?}", variance);
 
     Ok(())
 }
@@ -59,7 +73,7 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
-    use crate::{calculate_log_return, mean};
+    use crate::{calculate_log_return, mean, variance};
 
     #[test]
     fn test_calculate_log_return() {
@@ -74,6 +88,13 @@ mod tests {
     #[test]
     fn test_mean() {
         let v: Vec<f32> = vec![1.0, 2.0, 3.0, 4.0];
-        assert_eq!(mean(v), 2.5);
+        assert_eq!(mean(&v), 2.5);
+    }
+
+    #[test]
+    fn test_variance() {
+        let v: Vec<f32> = vec![1.0, 2.0, 3.0, 4.0];
+        let mean = mean(&v);
+        assert_eq!(variance(&v, &mean), 1.25);
     }
 }
