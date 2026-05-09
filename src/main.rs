@@ -42,6 +42,10 @@ fn variance(v: &Vec<f32>, mean: &f32) -> f32 {
     numerator / v.len() as f32
 }
 
+fn standard_deviation(variance: &f32) -> f32 {
+    variance.sqrt()
+}
+
 fn start() -> Result<(), Box<dyn Error>> {
     let file = File::open("data.csv")?;
     let mut rdr = csv::Reader::from_reader(file);
@@ -58,8 +62,11 @@ fn start() -> Result<(), Box<dyn Error>> {
 
     let variance = variance(&log_returns, &mean);
 
-    println!("{:?}", mean);
-    println!("{:?}", variance);
+    let standard_deviation = standard_deviation(&variance);
+
+    println!("mean {:?}", mean);
+    println!("variance {:?}", variance);
+    println!("standard deviation {:?}", standard_deviation);
 
     Ok(())
 }
@@ -73,7 +80,7 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
-    use crate::{calculate_log_return, mean, variance};
+    use crate::{calculate_log_return, mean, standard_deviation, variance};
 
     #[test]
     fn test_calculate_log_return() {
@@ -96,5 +103,14 @@ mod tests {
         let v: Vec<f32> = vec![1.0, 2.0, 3.0, 4.0];
         let mean = mean(&v);
         assert_eq!(variance(&v, &mean), 1.25);
+    }
+
+    #[test]
+    fn test_standard_deviation() {
+        let v: Vec<f32> = vec![1.0, 2.0, 3.0, 4.0];
+        let mean = mean(&v);
+        let variance = variance(&v, &mean);
+
+        assert_eq!(standard_deviation(&variance), 1.118034)
     }
 }
