@@ -1,4 +1,4 @@
-use core::num;
+use rand_distr::{Distribution, Normal};
 use serde::Deserialize;
 use std::{error::Error, fs::File, process};
 
@@ -46,6 +46,24 @@ fn standard_deviation(variance: &f32) -> f32 {
     variance.sqrt()
 }
 
+fn drift_component(mean: &f32, variance: &f32) -> f32 {
+    mean - 0.5 * variance
+}
+
+fn random_component(mean: &f32) -> f32 {
+    let normal = Normal::new(0.0, 1.0).unwrap();
+    let z = normal.sample(&mut rand::rng());
+
+    mean * z
+}
+
+fn geometric_brownian_motion(todays_price: f32, mean: f32, variance: f32) -> f32 {
+    let drift = drift_component(&mean, &variance);
+    let random = random_component(&mean);
+
+    todays_price + f32::exp(drift + random)
+}
+
 fn start() -> Result<(), Box<dyn Error>> {
     let file = File::open("data.csv")?;
     let mut rdr = csv::Reader::from_reader(file);
@@ -80,7 +98,7 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
-    use crate::{calculate_log_return, mean, standard_deviation, variance};
+    use crate::{calculate_log_return, drift_component, mean, standard_deviation, variance};
 
     #[test]
     fn test_calculate_log_return() {
@@ -111,6 +129,13 @@ mod tests {
         let mean = mean(&v);
         let variance = variance(&v, &mean);
 
-        assert_eq!(standard_deviation(&variance), 1.118034)
+        assert_eq!(standard_deviation(&variance), 1.118034);
+    }
+
+    #[test]
+    fn test_drift_component() {
+        let mean = 0.55;
+        let variance = 0.12;
+        assert_eq!(drift_component(&mean, &variance), 0.49);
     }
 }
