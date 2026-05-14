@@ -1,6 +1,6 @@
 use rand_distr::{Distribution, Normal};
 use serde::Deserialize;
-use std::{error::Error, fs::File, process};
+use std::{error::Error, fs::File, process, vec};
 
 #[derive(Debug, Deserialize)]
 struct Row {
@@ -16,7 +16,7 @@ fn calculate_log_return(a: f32, b: f32) -> f32 {
     f32::ln(a / b)
 }
 
-fn log_returns(rows: Vec<Row>) -> Vec<f32> {
+fn log_returns(rows: &[Row]) -> Vec<f32> {
     let mut result: Vec<f32> = vec![];
 
     for n in 1..rows.len() {
@@ -57,11 +57,29 @@ fn random_component(mean: &f32) -> f32 {
     mean * z
 }
 
-fn geometric_brownian_motion(todays_price: f32, mean: f32, variance: f32) -> f32 {
+fn geometric_brownian_motion(todays_price: &f32, mean: &f32, variance: &f32) -> f32 {
     let drift = drift_component(&mean, &variance);
     let random = random_component(&mean);
 
     todays_price + f32::exp(drift + random)
+}
+
+fn run_alternate_simulation(
+    starting_price: &f32,
+    time_horizon: &i32,
+    mean: &f32,
+    variance: &f32,
+) -> Vec<f32> {
+    let mut previous_days_price = *starting_price;
+    let mut result: Vec<f32> = vec![];
+    result.push(previous_days_price);
+
+    for _ in 0..*time_horizon {
+        previous_days_price = geometric_brownian_motion(&previous_days_price, mean, variance);
+        result.push(previous_days_price);
+    }
+
+    result
 }
 
 fn start() -> Result<(), Box<dyn Error>> {
@@ -74,17 +92,17 @@ fn start() -> Result<(), Box<dyn Error>> {
         rows.push(result?);
     }
 
-    let log_returns = log_returns(rows);
-
+    let log_returns = log_returns(&rows);
     let mean = mean(&log_returns);
-
     let variance = variance(&log_returns, &mean);
 
-    let standard_deviation = standard_deviation(&variance);
+    let time_horizon = 10;
+    let starting_price = rows[0].close;
 
-    println!("mean {:?}", mean);
-    println!("variance {:?}", variance);
-    println!("standard deviation {:?}", standard_deviation);
+    let result: Vec<f32> =
+        run_alternate_simulation(&starting_price, &time_horizon, &mean, &variance);
+
+    println!("{:?}", result);
 
     Ok(())
 }
@@ -98,7 +116,7 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
-    use crate::{calculate_log_return, drift_component, mean, standard_deviation, variance};
+    use super::*;
 
     #[test]
     fn test_calculate_log_return() {
