@@ -61,7 +61,7 @@ fn geometric_brownian_motion(todays_price: &f32, mean: &f32, variance: &f32) -> 
     let drift = drift_component(&mean, &variance);
     let random = random_component(&mean);
 
-    todays_price + f32::exp(drift + random)
+    todays_price * f32::exp(drift + random)
 }
 
 fn run_alternate_simulation(
